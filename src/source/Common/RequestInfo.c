@@ -127,6 +127,7 @@ CleanUp:
 
 STATUS createRequestHeader(PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen, PRequestHeader* ppHeader)
 {
+    ENTER();
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 nameLen, valueLen, size;
     PRequestHeader pRequestHeader = NULL;
@@ -177,12 +178,13 @@ CleanUp:
     if (ppHeader != NULL) {
         *ppHeader = pRequestHeader;
     }
-
+    LEAVES();
     return retStatus;
 }
 
 STATUS setRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen)
 {
+    ENTER();
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 count;
     PSingleListNode pCurNode, pPrevNode = NULL;
@@ -190,12 +192,14 @@ STATUS setRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName, UINT32 head
     UINT64 item;
 
     CHK(pRequestInfo != NULL && headerName != NULL && headerValue != NULL, STATUS_NULL_ARG);
+    // #YC_TBD, #memory, should use built-in function.
     CHK_STATUS(singleListGetNodeCount(pRequestInfo->pRequestHeaders, &count));
     CHK(count < MAX_REQUEST_HEADER_COUNT, STATUS_MAX_REQUEST_HEADER_COUNT);
 
     CHK_STATUS(createRequestHeader(headerName, headerNameLen, headerValue, headerValueLen, &pRequestHeader));
 
     // Iterate through the list and insert in an alpha order
+    // #YC_TBD, why need in an alpha order.
     CHK_STATUS(singleListGetHeadNode(pRequestInfo->pRequestHeaders, &pCurNode));
     while (pCurNode != NULL) {
         CHK_STATUS(singleListGetNodeData(pCurNode, &item));
@@ -227,7 +231,7 @@ CleanUp:
     if (STATUS_FAILED(retStatus) && pRequestHeader != NULL) {
         MEMFREE(pRequestHeader);
     }
-
+    LEAVE();
     return retStatus;
 }
 

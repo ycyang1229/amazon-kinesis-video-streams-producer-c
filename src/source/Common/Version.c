@@ -9,6 +9,7 @@ STATUS getUserAgentString(PCHAR userAgentName, PCHAR customUserAgent, UINT32 len
     STATUS retStatus = STATUS_SUCCESS;
     PCHAR pUserAgentName;
     INT32 requiredLen;
+    // #YC_TBD, #stack.
     CHAR osVer[MAX_OS_VERSION_STRING_LEN + 1];
     CHAR platformName[MAX_PLATFORM_NAME_STRING_LEN + 1];
     CHAR compilerInfo[MAX_COMPILER_INFO_STRING_LEN + 1];
