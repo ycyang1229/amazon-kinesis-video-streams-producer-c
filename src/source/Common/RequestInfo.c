@@ -190,12 +190,14 @@ STATUS setRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName, UINT32 head
     UINT64 item;
 
     CHK(pRequestInfo != NULL && headerName != NULL && headerValue != NULL, STATUS_NULL_ARG);
+    // #YC_TBD, #memory, should use built-in function.
     CHK_STATUS(singleListGetNodeCount(pRequestInfo->pRequestHeaders, &count));
     CHK(count < MAX_REQUEST_HEADER_COUNT, STATUS_MAX_REQUEST_HEADER_COUNT);
 
     CHK_STATUS(createRequestHeader(headerName, headerNameLen, headerValue, headerValueLen, &pRequestHeader));
 
     // Iterate through the list and insert in an alpha order
+    // #YC_TBD, why need in an alpha order.
     CHK_STATUS(singleListGetHeadNode(pRequestInfo->pRequestHeaders, &pCurNode));
     while (pCurNode != NULL) {
         CHK_STATUS(singleListGetNodeData(pCurNode, &item));

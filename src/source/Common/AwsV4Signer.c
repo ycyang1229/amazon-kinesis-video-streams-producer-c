@@ -19,6 +19,7 @@ STATUS generateAwsSigV4Signature(PRequestInfo pRequestInfo, PCHAR dateTimeStr, B
             scratchLen, curSize, hmacSize, hexHmacLen;
     PCHAR pScratchBuf = NULL, pCredentialScope = NULL, pUrlEncodedCredentials = NULL,
             pSignedStr = NULL, pSignedHeaders = NULL;
+
     CHAR requestHexSha256[2 * SHA256_DIGEST_LENGTH + 1];
     BYTE hmac[KVS_MAX_HMAC_SIZE];
     CHAR hexHmac[KVS_MAX_HMAC_SIZE * 2 + 1];
@@ -142,9 +143,11 @@ STATUS signAwsRequestInfo(PRequestInfo pRequestInfo)
     // Get the host header
     CHK_STATUS(getRequestHost(pRequestInfo->url, &pHostStart, &pHostEnd));
     len = (UINT32) (pHostEnd - pHostStart);
-
+    // ex: host: kinesisvideo.us-west-2.amazonaws.com/describeSignalingChannel
     CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_HEADER_HOST, 0, pHostStart, len));
+    // X-Amz-Date
     CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_HEADER_AMZ_DATE, 0, dateTimeStr, 0));
+    // content-type
     CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_CONTENT_TYPE_NAME, 0, AWS_SIG_V4_CONTENT_TYPE_VALUE, 0));
 
     // Set the content-length
@@ -154,12 +157,14 @@ STATUS signAwsRequestInfo(PRequestInfo pRequestInfo)
     }
 
     // Generate the signature
+    // https://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html
     CHK_STATUS(generateAwsSigV4Signature(pRequestInfo, dateTimeStr, TRUE, &pSignatureInfo, &len));
-
     // Set the header
+    // Authorization
     CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_HEADER_AUTH, 0, pSignatureInfo, len));
 
     // Set the security token header if provided
+    // x-amz-security-token
     if (pRequestInfo->pAwsCredentials->sessionTokenLen != 0) {
         CHK_STATUS(setRequestHeader(pRequestInfo,
                                         AWS_SIG_V4_HEADER_AMZ_SECURITY_TOKEN,
