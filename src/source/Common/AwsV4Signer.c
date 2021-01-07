@@ -153,7 +153,7 @@ STATUS signAwsRequestInfo(PRequestInfo pRequestInfo)
     // Set the content-length
     if (pRequestInfo->body != NULL) {
         CHK_STATUS(ULTOSTR(pRequestInfo->bodySize, contentLenBuf, SIZEOF(contentLenBuf), 10, NULL));
-        CHK_STATUS(setRequestHeader(pRequestInfo, (PCHAR) "content-length", 0,contentLenBuf, 0));
+        CHK_STATUS(setRequestHeader(pRequestInfo, (PCHAR) AWS_SIG_V4_CONTENT_LENGTH_NAME, 0,contentLenBuf, 0));
     }
 
     // Generate the signature
