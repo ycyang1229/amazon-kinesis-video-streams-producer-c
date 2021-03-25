@@ -54,7 +54,7 @@ extern "C" {
 #include "StaticCredentialProvider.h"
 #include "FileCredentialProvider.h"
 
-#if !(defined(KVS_BUILD_WITH_CURL) || defined(KVS_BUILD_WITH_LWS))
+#if !(defined(KVS_BUILD_WITH_CURL) || defined(KVS_BUILD_WITH_LWS) || defined(KVS_BUILD_WITH_COMMON))
 #error Need to specify the networking client at build time
 #endif
 #if defined(KVS_BUILD_WITH_CURL)

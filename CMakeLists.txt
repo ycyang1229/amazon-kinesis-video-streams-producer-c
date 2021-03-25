@@ -6,10 +6,11 @@ project(KinesisVideoProducerC LANGUAGES C)
 # User Flags
 option(ADD_MUCLIBC "Add -muclibc c flag" OFF)
 option(BUILD_DEPENDENCIES "Whether or not to build depending libraries from source" ON)
-option(USE_OPENSSL "Use openssl as crypto library" ON)
-option(USE_MBEDTLS "Use openssl as crypto library" OFF)
+option(USE_OPENSSL "Use openssl as crypto library" OFF)
+option(USE_MBEDTLS "Use openssl as crypto library" ON)
+option(BUILD_COMMON_ONLY "Whether or not to build ProducerC libwebsockets common library" ON)
 option(BUILD_COMMON_LWS "Whether or not to build ProducerC libwebsockets common library" OFF)
-option(BUILD_COMMON_CURL "Whether or not to build ProducerC curl common library" ON)
+option(BUILD_COMMON_CURL "Whether or not to build ProducerC curl common library" OFF)
 option(BUILD_OPENSSL_PLATFORM "If buildng OpenSSL what is the target platform" OFF)
 
 # Developer Flags
@@ -21,8 +22,8 @@ option(MEMORY_SANITIZER "Build with MemorySanitizer." OFF)
 option(THREAD_SANITIZER "Build with ThreadSanitizer." OFF)
 option(UNDEFINED_BEHAVIOR_SANITIZER "Build with UndefinedBehaviorSanitizer." OFF)
 option(ALIGNED_MEMORY_MODEL "Aligned memory model ONLY." OFF)
-option(BUILD_KVSPIC "Whether or not to build the part of kvs pic" OFF)
-option(KVS_PLAT_ESP_FREERTOS "Build for ESP FreeRTOS" ON)
+option(BUILD_KVSPIC "Whether or not to build the part of kvs pic" ON)
+option(KVS_PLAT_ESP_FREERTOS "Build for ESP FreeRTOS" OFF)
 
 
 if(KVS_PLAT_ESP_FREERTOS)
@@ -75,7 +76,7 @@ if(BUILD_DEPENDENCIES)
     message(FATAL_ERROR "No crypto library selected.")
   endif()
 
-  if (BUILD_COMMON_LWS)
+  if (BUILD_COMMON_LWS AND NOT BUILD_COMMON_ONLY)
     set(BUILD_ARGS  -DBUILD_STATIC=${BUILD_STATIC}
                     -DOPENSSL_DIR=${OPEN_SRC_INSTALL_PREFIX}
                     -DUSE_OPENSSL=${USE_OPENSSL}
@@ -83,7 +84,7 @@ if(BUILD_DEPENDENCIES)
     build_dependency(websockets ${BUILD_ARGS})
   endif()
 
-  if (BUILD_COMMON_CURL)
+  if (BUILD_COMMON_CURL AND NOT BUILD_COMMON_ONLY)
     set(BUILD_ARGS  -DBUILD_STATIC=${BUILD_STATIC}
                     -DUSE_OPENSSL=${USE_OPENSSL}
                     -DUSE_MBEDTLS=${USE_MBEDTLS})
@@ -133,7 +134,7 @@ if(NOT KVS_PLAT_ESP_FREERTOS)
   endif()
 endif()
 
-if(BUILD_COMMON_CURL)
+if(BUILD_COMMON_CURL AND NOT BUILD_COMMON_ONLY)
   if (WIN32)
     find_package(CURL REQUIRED)
     set(CURL_LIBRARIES CURL::libcurl)
@@ -146,7 +147,7 @@ if(BUILD_COMMON_CURL)
 endif()
 
 if(NOT KVS_PLAT_ESP_FREERTOS)
-if (BUILD_COMMON_LWS)
+if (BUILD_COMMON_LWS AND NOT BUILD_COMMON_ONLY)
   if (WIN32)
     find_package(LIBWEBSOCKETS REQUIRED PATHS ${OPEN_SRC_INSTALL_PREFIX})
   else()
@@ -231,7 +232,29 @@ install(
   DIRECTORY ${KINESIS_VIDEO_PRODUCER_C_SRC}/src/include
   DESTINATION .)
 
-if(BUILD_COMMON_LWS)
+if(BUILD_COMMON_ONLY)
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/libkvsCommon.pc.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/libkvsCommon.pc" @ONLY)
+
+  add_library(kvsCommon STATIC ${KVS_COMMON_SOURCE_FILES_BASE})
+  target_compile_definitions(kvsCommon PRIVATE KVS_BUILD_WITH_COMMON ${CPRODUCER_COMMON_TLS_OPTION})
+  target_link_libraries(kvsCommon
+          ${OPENSSL_CRYPTO_LIBRARY}
+          ${OPENSSL_SSL_LIBRARY}
+          kvspicUtils)
+
+  install(
+    TARGETS kvsCommon
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin)
+  install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/libkvsCommon.pc
+    DESTINATION lib/pkgconfig)
+endif()
+
+if(BUILD_COMMON_LWS AND NOT BUILD_COMMON_ONLY)
     configure_file(
       "${CMAKE_CURRENT_SOURCE_DIR}/libkvsCommonLws.pc.cmake"
       "${CMAKE_CURRENT_BINARY_DIR}/libkvsCommonLws.pc" @ONLY)
@@ -254,7 +277,7 @@ if(BUILD_COMMON_LWS)
       DESTINATION lib/pkgconfig)
 endif()
 
-if(BUILD_COMMON_CURL)
+if(BUILD_COMMON_CURL AND NOT BUILD_COMMON_ONLY)
     # producer only uses curl right now
     configure_file(
       "${CMAKE_CURRENT_SOURCE_DIR}/libkvsCommonCurl.pc.cmake"
